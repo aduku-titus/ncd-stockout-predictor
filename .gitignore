@@ -1,24 +1,31 @@
-# Ignore Python cache files
+# ===================================================================
+# --- Data Files ---
+# Ignore ALL files that end in .csv
+*.csv
+
+# Ignore any file that contains the text ", index=False"
+# This is a powerful way to catch our badly named file.
+*, index=False
+
+# ===================================================================
+# --- Python & System Files ---
 __pycache__/
 *.pyc
-
-# Ignore virtual environment folders
 .env
 .venv
-env/
-venv/
-
-# Ignore editor and OS files
+.ipynb_checkpoints/
 .vscode/
 .idea/
-*.DS_Store
+.DS_Store
 
-# Ignore our practice and temporary files
-# We can add our specific file names here
+# ===================================================================
+# --- Project-Specific Ignores ---
+# Ignore old or practice scripts.
 clinic_appointment_schedule.py
 lab_results_report.py
-level_1_static_data_generator.py
-level_2_dynamic_data_generator.py
-ncd_2_ncd_data_generator.py
-patient_vitals_log.py
+patient_vitals*.py
+level_1*.py
+level_2*.py # A wildcard to catch ALL level_2 scripts
+
+# Temporarily ignore the app until Phase 2
 app.py
