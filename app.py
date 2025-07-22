@@ -4,23 +4,39 @@ import numpy as np
 import pickle
 import shap
 import matplotlib.pyplot as plt
+import os # <-- NEW: Import the 'os' library to handle file paths
 
+# ===================================================================
 # --- 1. PAGE CONFIG ---
+# ===================================================================
 st.set_page_config(
     page_title="NCD Stock-out Predictor",
     page_icon="💊",
     layout="centered"
 )
 
-# --- 2. LOAD ASSETS ---
+# ===================================================================
+# --- 2. LOAD ASSETS (Robust Version) ---
+# ===================================================================
 @st.cache_data
 def load_assets():
-    """Loads the model and background data."""
-    with open('ncd_model.pkl', 'rb') as f:
-        model = pickle.load(f)
+    """
+    Loads all necessary assets using absolute paths to be robust in deployment.
+    """
+    # --- Get the absolute path to the directory where this script is located ---
+    _this_file_path = os.path.dirname(os.path.abspath(__file__))
     
-    background_data = pd.read_csv("shap_background_data.csv")
-    df_featured = pd.read_csv("ncd_stock_data_featured.csv")
+    # --- Define the absolute paths to your asset files ---
+    model_path = os.path.join(_this_file_path, 'ncd_model.pkl')
+    background_data_path = os.path.join(_this_file_path, 'shap_background_data.csv')
+    featured_data_path = os.path.join(_this_file_path, 'ncd_stock_data_featured.csv')
+
+    # --- Load the assets using their full paths ---
+    with open(model_path, 'rb') as f:
+        model = pickle.load(f)
+        
+    background_data = pd.read_csv(background_data_path)
+    df_featured = pd.read_csv(featured_data_path)
     
     return model, background_data, df_featured
 
@@ -29,10 +45,12 @@ try:
     DRUG_LIST = sorted(df_featured['Drug'].unique())
     FEATURE_NAMES = model.feature_names_in_
 except FileNotFoundError:
-    st.error("Model or data files not found. Please run the training notebook and feature engineering script first.")
+    st.error("Model or data files not found. Please ensure ncd_model.pkl, shap_background_data.csv, and ncd_stock_data_featured.csv are in the GitHub repository.")
     st.stop()
 
+# ===================================================================
 # --- 3. UI ---
+# ===================================================================
 st.title("NCD Medication Stock-out Predictor 💊")
 st.markdown("Enter current data to forecast the risk of a medication stock-out for next month.")
 st.divider()
@@ -47,7 +65,9 @@ with col2:
     consumption = st.number_input("Consumption", min_value=0, value=500)
     losses = st.number_input("Losses & Adjustments", min_value=0, value=20)
 
+# ===================================================================
 # --- 4. PREDICTION LOGIC ---
+# ===================================================================
 st.divider()
 st.header("Step 2: Run Prediction")
 
@@ -78,15 +98,11 @@ if st.button("Forecast Stock-out Risk", type="primary", use_container_width=True
     # --- SHAP EXPLANATION ---
     with st.expander("Why did the model make this prediction?"):
         
-        # Use the more general shap.Explainer
         explainer = shap.Explainer(model.predict, background_data)
         shap_values = explainer(input_data)
         
-        # Create a new figure for the plot
         fig, ax = plt.subplots()
         
-        # For waterfall, we now have a clean shap_values object for a single prediction.
-        # We select the first (and only) instance with [0].
         shap.plots.waterfall(shap_values[0], max_display=10, show=False)
         
         st.pyplot(fig)
