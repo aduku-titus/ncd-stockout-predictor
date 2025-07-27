@@ -18,3 +18,5 @@ patient_vitals*.py
 clinic_appointment*.py
 lab_results*.py
 generate_data.py
+# Ignore any file that contains the text ", index=False"
+*, index=False
